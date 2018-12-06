@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+
+package main;
+
+use 5.010001;
+use strict;
+use warnings;
+
+our %SPEC;
+
+$SPEC{app} = {
+    v => 1.1,
+    summary => 'Say hello',
+    args => {
+        name => {
+            summary => 'Name to greet',
+            schema => 'str*',
+            default => 'Chubby Bunny',
+        },
+    },
+};
+sub app {
+    my %args = @_;
+
+    # XXX schema
+    my $name = $args{name} // 'Chubby Bunny';
+
+    [200, "OK", "Hello, $name"];
+}
+
+use Perinci::Script::CLI::HTMLForm;
+
+Perinci::Script::CLI::HTMLForm->new(
+    url => '/main/app',
+)->run;
