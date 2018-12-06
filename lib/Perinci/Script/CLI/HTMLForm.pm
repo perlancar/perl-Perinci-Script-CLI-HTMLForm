@@ -26,19 +26,58 @@ sub BUILD {
 
 sub run {
     require Borang::HTML;
+    require Browser::Open;
+    require Perinci::Sub::GetArgs::WebForm;
+    require Plack::Request;
+    require Plack::Runner;
+    require Port::Selector;
 
     my ($self) = @_;
 
-    my $r = {};
-    my $meta = $self->get_meta($r, $self->url);
+    my $port = Port::Selector->new->port;
+    my $server_url = "http://localhost:$port/";
 
-    my $res = Borang::HTML::gen_html_form(
-        meta => $meta,
-        meta_is_normalized => 1,
-        # values => { ... },
-    );
+    my $app = sub {
+        my $env = shift;
 
-    print $res;
+        my $preq = Plack::Request->new($env);
+        my $pres = $preq->new_response(200);
+        $pres->content_type('text/html');
+
+        my @c;
+
+        use DD; dd $preq->parameters;
+
+        my $r = {};
+        my $meta = $self->get_meta($r, $self->url);
+
+        my $args = Perinci::Sub::GetArgs::WebForm::get_args_from_webform(
+            $preq->parameters,
+            $meta,
+            1,
+        );
+
+        if ($preq->parameters->{_submit}) {
+            my $res = $self->riap_client->request(call => $self->url, {args=>$args});
+            push @c, $res->[2];
+        } else {
+            my $form = Borang::HTML::gen_html_form(
+                action => "$server_url?_submit=1",
+                meta => $meta,
+                meta_is_normalized => 1,
+                # values => { ... },
+            );
+            push @c, $form;
+        }
+
+      RETURN_RES:
+        $pres->body(join "", @c);
+        $pres->finalize;
+    };
+
+    my $runner = Plack::Runner->new;
+    $runner->parse_options("--host", "localhost", "--port", $port);
+    $runner->run($app);
 }
 
 1;
