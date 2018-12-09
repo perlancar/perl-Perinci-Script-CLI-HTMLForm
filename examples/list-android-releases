@@ -1,0 +1,13 @@
+#!/usr/bin/env perl
+
+package main;
+
+use 5.010001;
+use strict;
+use warnings;
+
+use Perinci::Script::CLI::HTMLForm;
+
+Perinci::Script::CLI::HTMLForm->new(
+    url => '/Android/Releases/list_android_releases',
+)->run;

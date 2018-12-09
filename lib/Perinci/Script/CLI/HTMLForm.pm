@@ -62,10 +62,13 @@ sub run {
             push @c, $res->[2];
         } else {
             my $form = Borang::HTML::gen_html_form(
-                action => "$server_url?_submit=1",
+                action => $server_url,
                 meta => $meta,
                 meta_is_normalized => 1,
-                # values => { ... },
+                additional_hidden_vars => ['_submit'],
+                values => {
+                    _submit => 1,
+                },
             );
             push @c, $form;
         }
